@@ -17,4 +17,13 @@ public class Log {
         this.date = date;
         this.text = text;
     }
+
+    @Override
+    public String toString() {
+        return "Log{" +
+                "id=" + id +
+                ", date=" + date +
+                ", text='" + text + '\'' +
+                '}';
+    }
 }

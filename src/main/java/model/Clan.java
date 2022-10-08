@@ -31,6 +31,10 @@ public class Clan {
        gold.getAndAdd(plus);
     }
 
+    public void minusGold(int minus){
+        gold.getAndSet(gold.get() - minus);
+    }
+
     public int getGold() {
         return gold.get();
     }

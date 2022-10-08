@@ -12,4 +12,7 @@ public interface ClanService {
 
     Clan getClan(Long clanId);
 
+    void removeAllClans();
+
+    void printClansTable();
 }
