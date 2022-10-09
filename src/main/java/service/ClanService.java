@@ -9,10 +9,7 @@ public interface ClanService {
     Clan get(Long clanId);
 
     Clan save(Clan clan);
-
+    void update(Clan clan);
     Clan getClan(Long clanId);
 
-    void removeAllClans();
-
-    void printClansTable();
 }

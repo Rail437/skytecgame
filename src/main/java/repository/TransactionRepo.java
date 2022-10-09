@@ -6,15 +6,10 @@ import java.sql.*;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.atomic.LongAdder;
-import java.util.stream.Collectors;
 
 
 public class TransactionRepo extends JDBCUtils implements TransactionRepository {
     private final JDBCUtility jdbcUtility;
-    private volatile LongAdder longAdder = new LongAdder();
-    private volatile LinkedBlockingDeque<Transaction> transactionsDequeue = new LinkedBlockingDeque<Transaction>();
     private static final String CREATE_TABLE_SQL = "CREATE TABLE IF NOT EXISTS Transactions (id bigserial, clanId bigserial, date date, baseGold integer, operationGold integer, status boolean)";
     private static final String DELETE_SQL = "DELETE FROM Transactions";
     private static final String INSERT_SQL = "INSERT INTO Transactions (id, clanId, date, baseGold, operationGold, status) values (?,?,?,?,?,?)";
@@ -36,20 +31,29 @@ public class TransactionRepo extends JDBCUtils implements TransactionRepository 
 
 
     @Override
-    public synchronized void save(Transaction transaction) {
-        longAdder.increment();
-        transaction.setId(longAdder.longValue());
-        if (transactionsDequeue.add(transaction)) {
-            checkDeque();
-        }
-    }
-
-    private void checkDeque() {
+    public void save(Transaction transaction) {
         try {
             Connection connection = jdbcUtility.getConnection();
             PreparedStatement statement = connection.prepareStatement(INSERT_SQL);
-            while (transactionsDequeue.size() > 10) {
-                List<Transaction> transactionList = transactionsDequeue.stream().limit(10).collect(Collectors.toList());
+            statement.setLong(1, transaction.getId());
+            statement.setLong(2, transaction.getClanId());
+            statement.setDate(3, transaction.getDate());
+            statement.setInt(4, transaction.getBaseGold());
+            statement.setInt(5, transaction.getOperationGold());
+            statement.setBoolean(6, false);
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            printSQLException(e);
+        }
+    }
+
+    @Override
+    public void saveList(List<Transaction> transactionList) {
+        if (!transactionList.isEmpty()) {
+            System.out.println("save Transaction List");
+            try {
+                Connection connection = jdbcUtility.getConnection();
+                PreparedStatement statement = connection.prepareStatement(INSERT_SQL);
                 for (Transaction transaction : transactionList) {
                     statement.setLong(1, transaction.getId());
                     statement.setLong(2, transaction.getClanId());
@@ -60,20 +64,9 @@ public class TransactionRepo extends JDBCUtils implements TransactionRepository 
                     statement.addBatch();
                 }
                 statement.executeBatch();
-                transactionsDequeue.removeAll(transactionList);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-            for (Transaction transaction : transactionsDequeue) {
-                statement.setLong(1, transaction.getId());
-                statement.setLong(2, transaction.getClanId());
-                statement.setDate(3, transaction.getDate());
-                statement.setInt(4, transaction.getBaseGold());
-                statement.setInt(5, transaction.getOperationGold());
-                statement.setBoolean(6, false);
-                statement.executeUpdate();
-                transactionsDequeue.remove(transaction);
-            }
-        } catch (SQLException e) {
-            printSQLException(e);
         }
     }
 

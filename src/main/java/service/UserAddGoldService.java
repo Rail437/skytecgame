@@ -2,7 +2,7 @@ package service;
 
 import lombok.RequiredArgsConstructor;
 import model.Clan;
-import model.Log;
+import model.Transaction;
 
 import java.sql.Date;
 
@@ -10,13 +10,13 @@ import java.sql.Date;
 // Их суть в том, что они добавляют(или уменьшают) золото в казне клана
 @RequiredArgsConstructor
 public class UserAddGoldService { // пользователь добавляет золото из собственного кармана
-    private final ClanService clanService;
-    private final LogService logService;
+    private final MainService mainService;
 
     public void addGoldToClan(long userId, long clanId, int gold) {
-        Clan clan = clanService.getClan(clanId);
+        Clan clan = mainService.getClan(clanId);
+        int baseGold = clan.getGold();
         clan.addGold(gold);
-        logService.log(new Log(new Date(System.currentTimeMillis()), "User: " + userId + " added " + gold + " gold in Clan " + clanId));
-        clanService.save(clan);
+        mainService.save(new Transaction(clanId,new Date(System.currentTimeMillis()),baseGold,gold));
+        mainService.save(clan);
     }
 }

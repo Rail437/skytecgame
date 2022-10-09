@@ -1,63 +1,47 @@
 package controller;
 
+import manager.QueueManager;
 import model.Clan;
-import repository.*;
-import service.*;
+import service.MainService;
+import service.TaskService;
+import service.UserAddGoldService;
 
 public class ClanController {
-    private final ClanService clanService;
     private final TaskService taskService;
     private final UserAddGoldService userAddGoldService;
     private final MainService mainService;
 
-    public ClanController() {
-        JDBCUtility jdbcUtility = new PostgresJDBCUtility();
-        RepositoryImpl repository = new RepositoryImpl(jdbcUtility);
-        TransactionRepository transactionRepository = new TransactionRepo(jdbcUtility);
-        this.mainService = new MainService(repository, repository,transactionRepository);
-        this.clanService = new ClanServiceImpl(repository);
+    public ClanController(QueueManager queueManager) {
+        this.mainService = new MainService(queueManager);
         this.taskService = new TaskService(mainService);
-        this.userAddGoldService = new UserAddGoldService(mainService, mainService);
+        this.userAddGoldService = new UserAddGoldService(mainService);
     }
 
     public Clan saveClan(Clan clan) {
-        return clanService.save(clan);
+        return mainService.save(clan);
     }
 
     public void clanTaskComplete(Long clanid, Long taskId) {
         taskService.completeTask(clanid, taskId);
     }
 
-    public void clanRunRandomTask(Long clanId){
-        taskService.clanRunRandomTask(clanId);
-    }
 
-    public void removeAllClans() {
-        mainService.removeAllClans();
-    }
+//    public void removeAllClans() {
+//        mainService.removeAllClans();
+//    }
 
-    public void remomveAllLogs() {
-        mainService.removeAllLogs();
-    }
 
-    public void printClansTable() {mainService.printClansTable();
-    }
+//    public void printClansTable() {mainService.printClansTable();}
 
-    public void printLogsTable(){
-        mainService.printLogTable();
-    }
 
     public void userAddGold(Long userId,Long clanId, int gold){
         userAddGoldService.addGoldToClan(userId,clanId,gold);
     }
 
-    public void printAllLogByClanId(Long clanId){
-        mainService.printAllLogByClanId(clanId);
-    }
 
-    public void removeAllTransactions() {
-        mainService.deleteAllTransactions();
-    }
+//    public void removeAllTransactions() {
+//        mainService.deleteAllTransactions();
+//    }
 
     public void clanTaskPlus(Long id) {
         taskService.runTaskPlus(id);
@@ -66,7 +50,7 @@ public class ClanController {
         taskService.runTaskMinus(id);
     }
 
-    public void printAllTransactionByClanId(long id) {
-        mainService.printAllTransactionsByClanId(id);
-    }
+//    public void printAllTransactionByClanId(long id) {
+//        mainService.printAllTransactionsByClanId(id);
+//    }
 }

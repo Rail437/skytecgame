@@ -46,8 +46,7 @@ public class ClanJDBCUtility extends JDBCUtils {
     }
 
 
-
-    private void updateRecord(Long id, String name, int gold) {
+    public synchronized void updateRecord(Long id, String name, int gold) {
         try {
             Connection connection = jdbcUtility.getConnection();
             PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_CLANS_SQL);
@@ -60,36 +59,32 @@ public class ClanJDBCUtility extends JDBCUtils {
         }
     }
 
+    public synchronized void update(Clan clan) {
+        updateRecord(clan.getId(), clan.getName(), clan.getGold());
+    }
+
     public synchronized Clan save(Clan clan) {
-        Clan clanInDB = findById(clan.getId());
-        if (clanInDB != null) {
-            updateRecord(clan.getId(), clan.getName(), clan.getGold());
-        } else {
-            insertRecord(clan.getId(), clan.getName(), clan.getGold());
-        }
+        insertRecord(clan.getId(), clan.getName(), clan.getGold());
         return clan;
     }
 
     public synchronized void saveInBatch(List<Clan> clans) {
-        try {
-            Connection connection = jdbcUtility.getConnection();
-            PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_CLANS_SQL);
-            for (Clan clan : clans) {
-                if(findById(clan.getId()) != null) {
+        if (!clans.isEmpty()) {
+            try {
+                Connection connection = jdbcUtility.getConnection();
+                PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_CLANS_SQL);
+                for (Clan clan : clans) {
                     preparedStatement.setString(1, clan.getName());
                     preparedStatement.setInt(2, clan.getGold());
                     preparedStatement.setLong(3, clan.getId());
                     preparedStatement.addBatch();
-                }else {
-                    insertRecord(clan.getId(), clan.getName(), clan.getGold());
                 }
+                preparedStatement.executeBatch();
+            } catch (SQLException e) {
+                printSQLException(e);
             }
-            preparedStatement.executeBatch();
-        } catch (SQLException e) {
-            printSQLException(e);
         }
     }
-
 
 
     public Clan findById(Long clanId) {

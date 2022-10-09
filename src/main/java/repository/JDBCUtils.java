@@ -1,10 +1,8 @@
 package repository;
 
-import model.Log;
-
-import java.sql.*;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
 
 public class JDBCUtils {
 
