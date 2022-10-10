@@ -4,8 +4,6 @@ import model.Transaction;
 
 import java.sql.*;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 
 public class TransactionRepo extends JDBCUtils implements TransactionRepository {
@@ -14,7 +12,6 @@ public class TransactionRepo extends JDBCUtils implements TransactionRepository 
     private static final String DELETE_SQL = "DELETE FROM Transactions";
     private static final String INSERT_SQL = "INSERT INTO Transactions (id, clanId, date, baseGold, operationGold,text , status) values (?,?,?,?,?,?,?)";
     private static final String SELECT_SQL = "SELECT * from Transactions where clanId =?";
-    private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
     public TransactionRepo(JDBCConnection jdbcConnection) {
         this.jdbcConnection = jdbcConnection;

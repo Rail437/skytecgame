@@ -109,8 +109,9 @@ public class ClanJDBCUtility extends JDBCUtils {
 
     public List<Clan> findAllClans() {
         List<Clan> clanList = new ArrayList<>();
-        try (Connection connection = jdbcConnection.getConnection();
-             Statement statement = connection.createStatement()) {
+        try {
+            Connection connection = jdbcConnection.getConnection();
+            Statement statement = connection.createStatement();
             ResultSet rs = statement.executeQuery(SELECT_ALL_ClANS);
             while (rs.next()) {
                 long id = rs.getLong("id");

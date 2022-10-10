@@ -37,4 +37,7 @@ public class ClanController {
         taskService.runTaskMinus(id);
     }
 
+    public Clan getClan(Long clanId) {
+        return mainService.getClan(clanId);
+    }
 }

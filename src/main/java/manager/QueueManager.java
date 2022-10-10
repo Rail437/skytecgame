@@ -25,7 +25,7 @@ public class QueueManager {
     private volatile LongAdder lAdder = new LongAdder();
     private volatile LongAdder tAdder = new LongAdder();
     private volatile AtomicInteger flag = new AtomicInteger(0);
-    ExecutorService executor = Executors.newFixedThreadPool(4);
+    ExecutorService executor = Executors.newFixedThreadPool(5);
 
     public QueueManager(ClanJDBCUtility jdbcUtility, TransactionRepository transactionRepository) {
         this.clanJDBCUtility = jdbcUtility;
@@ -34,7 +34,17 @@ public class QueueManager {
 
     public synchronized void start() {
         for (int i = 0; i < 4; i++) {
-            executor.submit(()->bufferCheck());
+            executor.submit(() -> {
+                bufferCheck();
+            });
+        }
+    }
+
+    //В дальнейшем можно оптимизировать и запускать проверку только для нужного клана.
+    public void checkClanMap() {
+        List<Clan> allClans = clanJDBCUtility.findAllClans();
+        for (Clan clan : allClans) {
+            clanMap.put(clan.getId(), clan);
         }
     }
 
@@ -43,18 +53,18 @@ public class QueueManager {
     }
 
     private synchronized void bufferCheck() {
-        while (flag.getAndIncrement() < 2 || tList.size() > 0) { //первая часть приложения отрабатывает слишком быстро,
-            // поэтому необходимо проходить очердь несколько раз.
-            System.out.println("flag : " + flag.get() + " , " + "tList.size() > 0 : " + (tList.size() > 0));
+        while (flag.getAndIncrement() < 3 || tList.size() > 0) { //первая часть приложения может закончить свою работу во время обхода,
+            //поэтому необходимо пройтись по остаточным значениям.
+//            System.out.println("flag : " + flag.get() + " , " + "tList.size() > 0 : " + (tList.size() > 0));
             List<List<Clan>> partition = ListUtils.partition(new ArrayList(clanMap.values()), 10);
             for (List<Clan> clanList : partition) {
                 clanJDBCUtility.saveInBatch(clanList);
             }
 
-            while (tList.size() > 0){
-            List<Transaction> list = tList.stream().limit(1000).collect(Collectors.toList());
-            transactionRepository.saveList(list);
-            tList.removeAll(list);
+            while (tList.size() > 0) {
+                List<Transaction> list = tList.stream().limit(1000).collect(Collectors.toList());
+                transactionRepository.saveList(list);
+                tList.removeAll(list);
             }
         }
     }
@@ -73,8 +83,10 @@ public class QueueManager {
             lAdder.increment();
             clan.setId(lAdder.longValue());
         }
+        if (clanMap.get(clan.getId()) == null) {
+            clanJDBCUtility.save(clan);
+        }
         clanMap.put(clan.getId(), clan);
-        clanJDBCUtility.save(clan);
         return clan;
     }
 
@@ -93,18 +105,6 @@ public class QueueManager {
         tList.add(transaction);
 //        transactionRepository.save(transaction);
 //        System.out.println(transaction);
-    }
-
-    public boolean removeListInTList(List<Transaction> list) {
-        return tList.removeAll(list);
-    }
-
-    public Map<Long, Clan> getClanMap() {
-        return clanMap;
-    }
-
-    public ConcurrentLinkedQueue<Transaction> gettList() {
-        return tList;
     }
 
     public List<Clan> getClanList() {

@@ -1,7 +1,10 @@
 import controller.ClanController;
 import manager.QueueManager;
 import model.Clan;
-import repository.*;
+import repository.ClanJDBCUtility;
+import repository.JDBCConnection;
+import repository.PostgresJDBCConnection;
+import repository.TransactionRepo;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -14,25 +17,27 @@ public class Main {
         ClanController controller = new ClanController(manager);
         ExecutorService executorService = Executors.newFixedThreadPool(65);
         ExecutorService executor = Executors.newFixedThreadPool(2);
-        for (int i = 0; i < 64; i++) {
-            executorService.submit(()-> run(controller));
-        }
+        manager.checkClanMap();
         executor.submit(()->manager.start());
+        for (int i = 0; i < 64; i++) {
+            Long finalI = Long.valueOf(i+1);
+            executorService.submit(()-> run(controller, finalI));
+        }
 //        manager.removeAllClans();
 //        manager.removeAllTransactions();
-        System.out.println("stop");
         executor.submit(()->manager.stop());
         executorService.shutdown();
         executor.shutdown();
     }
 
 
-    private static void run(ClanController controller){
-        Clan clan = controller.saveClan(new Clan(Thread.currentThread().getName(), new AtomicInteger(10)));
-        for (int j = 0; j < 500; j++) {
+    private static void run(ClanController controller, Long i){
+        Clan clan = controller.getClan(i);
+//        Clan clan = controller.saveClan(new Clan(Thread.currentThread().getName(), new AtomicInteger(0)));
+        for (int j = 0; j < 1000; j++) {
             controller.clanTaskPlus(clan.getId());
         }
-        for (int j = 0; j < 500; j++) {
+        for (int j = 0; j < 1001; j++) {
             controller.clanTaskMinus(clan.getId());
         }
 
