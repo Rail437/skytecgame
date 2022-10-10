@@ -25,23 +25,10 @@ public class ClanController {
         taskService.completeTask(clanid, taskId);
     }
 
-
-//    public void removeAllClans() {
-//        mainService.removeAllClans();
-//    }
-
-
-//    public void printClansTable() {mainService.printClansTable();}
-
-
     public void userAddGold(Long userId,Long clanId, int gold){
         userAddGoldService.addGoldToClan(userId,clanId,gold);
     }
 
-
-//    public void removeAllTransactions() {
-//        mainService.deleteAllTransactions();
-//    }
 
     public void clanTaskPlus(Long id) {
         taskService.runTaskPlus(id);
@@ -50,7 +37,4 @@ public class ClanController {
         taskService.runTaskMinus(id);
     }
 
-//    public void printAllTransactionByClanId(long id) {
-//        mainService.printAllTransactionsByClanId(id);
-//    }
 }

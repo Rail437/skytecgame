@@ -11,7 +11,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
@@ -24,6 +25,7 @@ public class QueueManager {
     private volatile LongAdder lAdder = new LongAdder();
     private volatile LongAdder tAdder = new LongAdder();
     private volatile AtomicInteger flag = new AtomicInteger(0);
+    ExecutorService executor = Executors.newFixedThreadPool(4);
 
     public QueueManager(ClanJDBCUtility jdbcUtility, TransactionRepository transactionRepository) {
         this.clanJDBCUtility = jdbcUtility;
@@ -31,16 +33,18 @@ public class QueueManager {
     }
 
     public synchronized void start() {
-        bufferCheck();
+        for (int i = 0; i < 4; i++) {
+            executor.submit(()->bufferCheck());
+        }
     }
 
     public synchronized void stop() {
-        flag.set(10);
-        System.out.println("test flag: " + flag);
+        executor.shutdown();
     }
 
     private synchronized void bufferCheck() {
-        while (flag.getAndIncrement() < 10 || tList.size() > 0) {
+        while (flag.getAndIncrement() < 2 || tList.size() > 0) { //первая часть приложения отрабатывает слишком быстро,
+            // поэтому необходимо проходить очердь несколько раз.
             System.out.println("flag : " + flag.get() + " , " + "tList.size() > 0 : " + (tList.size() > 0));
             List<List<Clan>> partition = ListUtils.partition(new ArrayList(clanMap.values()), 10);
             for (List<Clan> clanList : partition) {
@@ -48,7 +52,7 @@ public class QueueManager {
             }
 
             while (tList.size() > 0){
-            List<Transaction> list = tList.stream().limit(10).collect(Collectors.toList());
+            List<Transaction> list = tList.stream().limit(1000).collect(Collectors.toList());
             transactionRepository.saveList(list);
             tList.removeAll(list);
             }

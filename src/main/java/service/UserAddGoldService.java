@@ -16,7 +16,7 @@ public class UserAddGoldService { // пользователь добавляет
         Clan clan = mainService.getClan(clanId);
         int baseGold = clan.getGold();
         clan.addGold(gold);
-        mainService.save(new Transaction(clanId,new Date(System.currentTimeMillis()),baseGold,gold));
+        mainService.save(new Transaction(clanId,new Date(System.currentTimeMillis()),baseGold,gold,"user: userid "+ userId +" added gold"));
         mainService.save(clan);
     }
 }

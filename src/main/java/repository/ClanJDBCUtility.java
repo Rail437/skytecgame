@@ -9,7 +9,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
 
 public class ClanJDBCUtility extends JDBCUtils {
-    private JDBCUtility jdbcUtility;
+    private JDBCConnection jdbcConnection;
     private volatile LongAdder longAdder = new LongAdder();
 
     private static final String CREATE_TABLE_SQL = "CREATE TABLE IF NOT EXISTS clans (id bigserial, name varchar(128),gold numeric)";
@@ -19,14 +19,14 @@ public class ClanJDBCUtility extends JDBCUtils {
     private static final String SELECT_ALL_ClANS = "select id,name,gold from clans ";
     private static final String REMOVE_ALL_CLANS = "DELETE FROM clans";
 
-    public ClanJDBCUtility(JDBCUtility jdbcUtility) {
-        this.jdbcUtility = jdbcUtility;
+    public ClanJDBCUtility(JDBCConnection jdbcConnection) {
+        this.jdbcConnection = jdbcConnection;
         createTable();
     }
 
     private void createTable() {
         try {
-            baseExecute(jdbcUtility.getConnection(), CREATE_TABLE_SQL);
+            baseExecute(jdbcConnection.getConnection(), CREATE_TABLE_SQL);
         } catch (SQLException e) {
             printSQLException(e);
         }
@@ -34,7 +34,7 @@ public class ClanJDBCUtility extends JDBCUtils {
 
     private void insertRecord(Long id, String name, int gold) {
         try {
-            Connection connection = jdbcUtility.getConnection();
+            Connection connection = jdbcConnection.getConnection();
             PreparedStatement preparedStatement = connection.prepareStatement(INSERT_CLANS_SQL);
             preparedStatement.setLong(1, id);
             preparedStatement.setString(2, name);
@@ -48,7 +48,7 @@ public class ClanJDBCUtility extends JDBCUtils {
 
     public synchronized void updateRecord(Long id, String name, int gold) {
         try {
-            Connection connection = jdbcUtility.getConnection();
+            Connection connection = jdbcConnection.getConnection();
             PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_CLANS_SQL);
             preparedStatement.setString(1, name);
             preparedStatement.setInt(2, gold);
@@ -71,7 +71,7 @@ public class ClanJDBCUtility extends JDBCUtils {
     public synchronized void saveInBatch(List<Clan> clans) {
         if (!clans.isEmpty()) {
             try {
-                Connection connection = jdbcUtility.getConnection();
+                Connection connection = jdbcConnection.getConnection();
                 PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_CLANS_SQL);
                 for (Clan clan : clans) {
                     preparedStatement.setString(1, clan.getName());
@@ -90,7 +90,7 @@ public class ClanJDBCUtility extends JDBCUtils {
     public Clan findById(Long clanId) {
         Clan clan = null;
         try {
-            Connection connection = jdbcUtility.getConnection();
+            Connection connection = jdbcConnection.getConnection();
             PreparedStatement preparedStatement = connection.prepareStatement(QUERY);
             preparedStatement.setLong(1, clanId);
             ResultSet rs = preparedStatement.executeQuery();
@@ -109,7 +109,7 @@ public class ClanJDBCUtility extends JDBCUtils {
 
     public List<Clan> findAllClans() {
         List<Clan> clanList = new ArrayList<>();
-        try (Connection connection = jdbcUtility.getConnection();
+        try (Connection connection = jdbcConnection.getConnection();
              Statement statement = connection.createStatement()) {
             ResultSet rs = statement.executeQuery(SELECT_ALL_ClANS);
             while (rs.next()) {
@@ -127,7 +127,7 @@ public class ClanJDBCUtility extends JDBCUtils {
 
     public void printClansTable() {
         try {
-            Connection connection = jdbcUtility.getConnection();
+            Connection connection = jdbcConnection.getConnection();
             Statement statement = connection.createStatement();
             ResultSet rs = statement.executeQuery(SELECT_ALL_ClANS);
             while (rs.next()) {
@@ -143,7 +143,7 @@ public class ClanJDBCUtility extends JDBCUtils {
 
     public void removeAllClans() {
         try {
-            baseExecute(jdbcUtility.getConnection(), REMOVE_ALL_CLANS);
+            baseExecute(jdbcConnection.getConnection(), REMOVE_ALL_CLANS);
         } catch (SQLException e) {
             printSQLException(e);
         }

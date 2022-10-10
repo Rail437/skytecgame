@@ -9,21 +9,21 @@ import java.util.concurrent.Executors;
 
 
 public class TransactionRepo extends JDBCUtils implements TransactionRepository {
-    private final JDBCUtility jdbcUtility;
-    private static final String CREATE_TABLE_SQL = "CREATE TABLE IF NOT EXISTS Transactions (id bigserial, clanId bigserial, date date, baseGold integer, operationGold integer, status boolean)";
+    private final JDBCConnection jdbcConnection;
+    private static final String CREATE_TABLE_SQL = "CREATE TABLE IF NOT EXISTS Transactions (id bigserial, clanId bigserial, date date, baseGold integer, operationGold integer, text varchar(256), status boolean)";
     private static final String DELETE_SQL = "DELETE FROM Transactions";
-    private static final String INSERT_SQL = "INSERT INTO Transactions (id, clanId, date, baseGold, operationGold, status) values (?,?,?,?,?,?)";
+    private static final String INSERT_SQL = "INSERT INTO Transactions (id, clanId, date, baseGold, operationGold,text , status) values (?,?,?,?,?,?,?)";
     private static final String SELECT_SQL = "SELECT * from Transactions where clanId =?";
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
-    public TransactionRepo(JDBCUtility jdbcUtility) {
-        this.jdbcUtility = jdbcUtility;
+    public TransactionRepo(JDBCConnection jdbcConnection) {
+        this.jdbcConnection = jdbcConnection;
         createTable();
     }
 
     private void createTable() {
         try {
-            baseExecute(jdbcUtility.getConnection(), CREATE_TABLE_SQL);
+            baseExecute(jdbcConnection.getConnection(), CREATE_TABLE_SQL);
         } catch (SQLException e) {
             printSQLException(e);
         }
@@ -33,14 +33,15 @@ public class TransactionRepo extends JDBCUtils implements TransactionRepository 
     @Override
     public void save(Transaction transaction) {
         try {
-            Connection connection = jdbcUtility.getConnection();
+            Connection connection = jdbcConnection.getConnection();
             PreparedStatement statement = connection.prepareStatement(INSERT_SQL);
             statement.setLong(1, transaction.getId());
             statement.setLong(2, transaction.getClanId());
             statement.setDate(3, transaction.getDate());
             statement.setInt(4, transaction.getBaseGold());
             statement.setInt(5, transaction.getOperationGold());
-            statement.setBoolean(6, false);
+            statement.setString(6,transaction.getText());
+            statement.setBoolean(7, false);
             statement.executeUpdate();
         } catch (SQLException e) {
             printSQLException(e);
@@ -50,9 +51,8 @@ public class TransactionRepo extends JDBCUtils implements TransactionRepository 
     @Override
     public void saveList(List<Transaction> transactionList) {
         if (!transactionList.isEmpty()) {
-            System.out.println("save Transaction List");
             try {
-                Connection connection = jdbcUtility.getConnection();
+                Connection connection = jdbcConnection.getConnection();
                 PreparedStatement statement = connection.prepareStatement(INSERT_SQL);
                 for (Transaction transaction : transactionList) {
                     statement.setLong(1, transaction.getId());
@@ -60,7 +60,8 @@ public class TransactionRepo extends JDBCUtils implements TransactionRepository 
                     statement.setDate(3, transaction.getDate());
                     statement.setInt(4, transaction.getBaseGold());
                     statement.setInt(5, transaction.getOperationGold());
-                    statement.setBoolean(6, false);
+                    statement.setString(6,transaction.getText());
+                    statement.setBoolean(7, false);
                     statement.addBatch();
                 }
                 statement.executeBatch();
@@ -74,7 +75,7 @@ public class TransactionRepo extends JDBCUtils implements TransactionRepository 
     @Override
     public void deleteAllTransactions() {
         try {
-            baseExecute(jdbcUtility.getConnection(), DELETE_SQL);
+            baseExecute(jdbcConnection.getConnection(), DELETE_SQL);
         } catch (SQLException e) {
             printSQLException(e);
         }
@@ -83,7 +84,7 @@ public class TransactionRepo extends JDBCUtils implements TransactionRepository 
     @Override
     public void printAllTransactionsByClanId(long clid) {
         try {
-            Connection connection = jdbcUtility.getConnection();
+            Connection connection = jdbcConnection.getConnection();
             PreparedStatement statement = connection.prepareStatement(SELECT_SQL);
             statement.setLong(1, clid);
             ResultSet resultSet = statement.executeQuery();
@@ -93,9 +94,10 @@ public class TransactionRepo extends JDBCUtils implements TransactionRepository 
                 Date date = resultSet.getDate("date");
                 int baseGold = resultSet.getInt("baseGold");
                 int operationGold = resultSet.getInt("operationGold");
+                String text = resultSet.getString("text");
                 boolean status = resultSet.getBoolean("status");
                 System.out.println(new Transaction(
-                        id, clanId, date, baseGold, operationGold, status));
+                        id, clanId, date, baseGold, operationGold, text, status));
             }
         } catch (SQLException e) {
             e.printStackTrace();

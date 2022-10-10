@@ -26,7 +26,7 @@ public class TaskService { // какой-то сервис с заданиями
         Clan clan = mainService.getClan(clanId);
         int baseGold = clan.getGold();
         clan.addGold(10);
-        mainService.save(new Transaction(clanId, new Date(System.currentTimeMillis()), baseGold, 10));
+        mainService.save(new Transaction(clanId, new Date(System.currentTimeMillis()), baseGold, 10, "text"));
         mainService.update(clan);
     }
 
@@ -35,7 +35,7 @@ public class TaskService { // какой-то сервис с заданиями
         Clan clan = mainService.getClan(clanId);
         int baseGold = clan.getGold();
         clan.minusGold(minus);
-        mainService.save(new Transaction(clanId, new Date(System.currentTimeMillis()), baseGold, -minus));
+        mainService.save(new Transaction(clanId, new Date(System.currentTimeMillis()), baseGold, -minus, "text"));
         mainService.update(clan);
     }
 }

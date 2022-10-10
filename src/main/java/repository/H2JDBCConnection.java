@@ -4,11 +4,10 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-public class PostgresJDBCUtility implements JDBCUtility{
-    private static String jdbcURL = "jdbc:postgresql://localhost:5432/hiber";
-    private static String jdbcUsername = "postgres";
-    private static String jdbcPassword = "qq112233";
-
+public class H2JDBCConnection implements JDBCConnection {
+    private static String jdbcURL = "jdbc:h2:~/clan";
+    private static String jdbcUsername = "sa";
+    private static String jdbcPassword = "";
     private Connection mainConnection;
 
 
