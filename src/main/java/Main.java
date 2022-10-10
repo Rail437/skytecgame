@@ -1,10 +1,7 @@
 import controller.ClanController;
 import manager.QueueManager;
 import model.Clan;
-import repository.ClanJDBCUtility;
-import repository.JDBCConnection;
-import repository.PostgresJDBCConnection;
-import repository.TransactionRepo;
+import repository.*;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -12,7 +9,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class Main {
     public static void main(String[] args) {
-        JDBCConnection jdbcConnection = new PostgresJDBCConnection();
+        JDBCConnection jdbcConnection = new H2JDBCConnection();
         QueueManager manager = new QueueManager(new ClanJDBCUtility(jdbcConnection), new TransactionRepo(jdbcConnection));
         ClanController controller = new ClanController(manager);
         ExecutorService executorService = Executors.newFixedThreadPool(65);
